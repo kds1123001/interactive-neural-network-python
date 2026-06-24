@@ -1,0 +1,258 @@
+#you stoopid 
+import tkinter as tk
+from tkinter import ttk
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.animation import FuncAnimation
+#shut up chump
+
+layer_sizes = []
+all_pos = []
+layer_colors_global = []
+active_layer = [0]
+anim = [None]
+fig_ref = [None]
+ax_ref = [None]
+canvas_ref = [None]
+#this is quite the simple like its just a cool demonstration of a neural network made using tkinter and matplotlib
+#soo also before you go on saying OHHH YOUR ONE OF THOSE VIBECODERS( WHICH I HATEEEEEEE) i tried making this code very prfect like tried to atleast i even wrote the exact CODE for each color 
+def draw_network_static(layer_sizes_in, ax, fig):
+    global layer_sizes, all_pos, layer_colors_global
+    layer_sizes = layer_sizes_in
+    ax.clear()
+    fig.patch.set_facecolor('#0f0f1a')
+    ax.set_facecolor('#0f0f1a')
+    ax.axis('off')
+
+    num_layers = len(layer_sizes)
+    MAX_DISPLAY = 10
+    layer_colors_global = ['#00c8ff'] + ['#a855f7'] * (num_layers - 2) + ['#ff6b6b']
+#purrfect code very eggcelent
+    fig_w, fig_h = 10, 6
+    layer_xs = np.linspace(1.2, fig_w - 1.2, num_layers)
+
+    def get_ys(n):
+        actual = min(n, MAX_DISPLAY)
+        ys = np.linspace(0.8, fig_h - 0.8, actual)
+        return ys, n > MAX_DISPLAY
+
+    all_pos.clear()
+    for lx, n in zip(layer_xs, layer_sizes):
+        ys, trunc = get_ys(n)
+        all_pos.append((lx, ys, trunc))
+
+    for i in range(num_layers - 1):
+        lx1, ys1, tr1 = all_pos[i]
+        lx2, ys2, tr2 = all_pos[i + 1]
+        dy1 = ys1[:-1] if tr1 else ys1
+        dy2 = ys2[:-1] if tr2 else ys2
+        for y1 in dy1:
+            for y2 in dy2:
+                ax.plot([lx1, lx2], [y1, y2], color='#ffffff',
+                        alpha=0.06, linewidth=0.35, zorder=1)
+
+    r = min(0.22, fig_h / (max(layer_sizes) * 3.8))
+
+    for idx, (lx, ys, trunc) in enumerate(all_pos):
+        color = layer_colors_global[idx]
+        draw_ys = ys[:-1] if trunc else ys
+        for y in draw_ys:
+            ax.add_patch(plt.Circle((lx, y), r * 1.6, color=color, alpha=0.12, zorder=2))
+            ax.add_patch(plt.Circle((lx, y), r, color=color, alpha=0.45, zorder=3))
+        if trunc:
+            for dy in [-0.3, 0, 0.3]:
+                ax.plot(lx, ys[-1] + dy, 'o', color=color, markersize=3, alpha=0.4, zorder=3)
+
+        lbl = 'Input' if idx == 0 else ('Output' if idx == num_layers - 1 else f'H{idx}')
+        ax.text(lx, 0.2, f'{lbl}\n{layer_sizes[idx]}', color=color, fontsize=7.5,
+                ha='center', va='top', fontfamily='monospace', fontweight='bold')
+
+    ax.set_xlim(0, fig_w)
+    ax.set_ylim(0, fig_h)
+
+    patches = [mpatches.Patch(color='#00c8ff', label=f'Input ({layer_sizes[0]})'),
+               mpatches.Patch(color='#a855f7', label=f'Hidden ({num_layers - 2} layers)'),
+               mpatches.Patch(color='#ff6b6b', label=f'Output ({layer_sizes[-1]})')]
+    ax.legend(handles=patches, loc='upper right', framealpha=0.15,
+              facecolor='#1a1a2e', edgecolor='#555', labelcolor='white',
+              fontsize=8, prop={'family': 'monospace'})
+    ax.set_title(f"Neural Network  —  {len(layer_sizes)} layers  ·  {sum(layer_sizes)} total neurons",
+                 color='white', fontsize=10, fontfamily='monospace', fontweight='bold', pad=8)
+
+STEPS = 30
+
+def animate(frame):
+    ax = ax_ref[0]
+    fig = fig_ref[0]
+    canvas = canvas_ref[0]
+    if not all_pos or not layer_sizes:
+        return
+
+    num_layers = len(layer_sizes)
+    total_frames = num_layers * STEPS
+    current_frame = frame % total_frames
+    src_idx = current_frame // STEPS
+    t = (current_frame % STEPS) / STEPS
+
+    if src_idx >= num_layers - 1:
+        return
+
+    dst_idx = src_idx + 1
+
+    ax.clear()
+    fig.patch.set_facecolor('#0f0f1a')
+    ax.set_facecolor('#0f0f1a')
+    ax.axis('off')
+
+    fig_w, fig_h = 10, 6
+    r = min(0.22, fig_h / (max(layer_sizes) * 3.8))
+
+    for i in range(num_layers - 1):
+        lx1, ys1, tr1 = all_pos[i]
+        lx2, ys2, tr2 = all_pos[i + 1]#so if youd know me youll know I LOVE MY COLORS EZZZ KID GETS COOKED 
+        dy1 = ys1[:-1] if tr1 else ys1
+        dy2 = ys2[:-1] if tr2 else ys2
+
+        if i == src_idx:
+            for y1 in dy1:
+                for y2 in dy2:
+                    ax.plot([lx1, lx2], [y1, y2], color='#ffffff',
+                            alpha=0.35 + 0.5 * np.sin(t * np.pi),
+                            linewidth=0.8, zorder=1)
+                    px = lx1 + t * (lx2 - lx1)
+                    py = y1 + t * (y2 - y1)
+                    ax.plot(px, py, 'o', color='#ffffff',
+                            markersize=3.5,
+                            alpha=0.9 * np.sin(t * np.pi), zorder=5)
+        else:
+            for y1 in dy1:
+                for y2 in dy2:
+                    ax.plot([lx1, lx2], [y1, y2], color='#ffffff',
+                            alpha=0.05, linewidth=0.35, zorder=1)
+
+    for idx, (lx, ys, trunc) in enumerate(all_pos):
+        color = layer_colors_global[idx]
+        draw_ys = ys[:-1] if trunc else ys
+
+        if idx == src_idx:
+            pulse = 0.75 + 0.25 * np.sin(t * np.pi * 2)
+            node_alpha = 0.95
+            glow_alpha = 0.35 * pulse
+            glow_r = r * 2.5 * pulse
+        elif idx == dst_idx:
+            pulse = 0.5 + 0.5 * t
+            node_alpha = 0.45 + 0.5 * t
+            glow_alpha = 0.12 + 0.3 * t
+            glow_r = r * 1.6
+        else:
+            node_alpha = 0.3
+            glow_alpha = 0.06
+            glow_r = r * 1.6
+#domer domer ay caramba 
+#next time use tiki tiki funk or there will be no next time capiche 
+        for y in draw_ys:
+            ax.add_patch(plt.Circle((lx, y), glow_r, color=color, alpha=glow_alpha, zorder=2))
+            ax.add_patch(plt.Circle((lx, y), r, color=color, alpha=node_alpha, zorder=3))
+
+        if trunc:
+            for dy in [-0.3, 0, 0.3]:
+                ax.plot(lx, ys[-1] + dy, 'o', color=color, markersize=3, alpha=0.4, zorder=3)
+
+        lbl = 'Input' if idx == 0 else ('Output' if idx == num_layers - 1 else f'H{idx}')
+        ax.text(lx, 0.2, f'{lbl}\n{layer_sizes[idx]}', color=color, fontsize=7.5,
+                ha='center', va='top', fontfamily='monospace', fontweight='bold')
+
+    ax.set_xlim(0, fig_w)
+    ax.set_ylim(0, fig_h)
+
+    patches = [mpatches.Patch(color='#00c8ff', label=f'Input ({layer_sizes[0]})'),
+               mpatches.Patch(color='#a855f7', label=f'Hidden ({num_layers - 2} layers)'),
+               mpatches.Patch(color='#ff6b6b', label=f'Output ({layer_sizes[-1]})')]
+    ax.legend(handles=patches, loc='upper right', framealpha=0.15,
+              facecolor='#1a1a2e', edgecolor='#555', labelcolor='white',
+              fontsize=8, prop={'family': 'monospace'})
+    ax.set_title(f"Neural Network  —  {num_layers} layers  ·  {sum(layer_sizes)} total neurons",
+                 color='white', fontsize=10, fontfamily='monospace', fontweight='bold', pad=8)
+
+    canvas.draw()
+
+def build_gui():
+    root = tk.Tk()
+    root.title("Neural Network Visualizer")
+    root.configure(bg='#0f0f1a')#eeya eeya yay ye yay ye
+    root.resizable(True, True)
+
+    style = ttk.Style()
+    style.theme_use('clam')
+    style.configure('TLabel', background='#0f0f1a', foreground='#cccccc', font=('Courier', 10))
+    style.configure('TButton', background='#a855f7', foreground='white', font=('Courier', 10, 'bold'), padding=6)
+    style.configure('TFrame', background='#0f0f1a')
+    style.configure('TSpinbox', fieldbackground='#1a1a2e', foreground='white', font=('Courier', 10))
+
+    ctrl = ttk.Frame(root, padding=12)
+    ctrl.pack(side=tk.LEFT, fill=tk.Y)
+
+    ttk.Label(ctrl, text="INPUT NEURONS", foreground='#00c8ff').grid(row=0, column=0, sticky='w', pady=4)
+    inp_var = tk.IntVar(value=3)
+    ttk.Spinbox(ctrl, from_=1, to=20, textvariable=inp_var, width=6).grid(row=0, column=1, pady=4)
+
+    ttk.Label(ctrl, text="HIDDEN LAYERS", foreground='#a855f7').grid(row=1, column=0, sticky='w', pady=4)
+    hl_var = tk.IntVar(value=2)
+    ttk.Spinbox(ctrl, from_=1, to=8, textvariable=hl_var, width=6).grid(row=1, column=1, pady=4)
+
+    hidden_frame = ttk.Frame(ctrl)
+    hidden_frame.grid(row=2, column=0, columnspan=2, pady=4)
+    hidden_vars = []
+
+    def refresh_hidden_inputs(*args):
+        for w in hidden_frame.winfo_children():#orcanero orcana
+            w.destroy()
+        hidden_vars.clear()
+        for i in range(hl_var.get()):
+            ttk.Label(hidden_frame, text=f"  Layer {i+1} neurons", foreground='#c084fc').grid(
+                row=i, column=0, sticky='w')
+            v = tk.IntVar(value=4)
+            ttk.Spinbox(hidden_frame, from_=1, to=32, textvariable=v, width=6).grid(row=i, column=1)
+            hidden_vars.append(v)
+
+    hl_var.trace_add('write', refresh_hidden_inputs)
+    refresh_hidden_inputs()
+    #bombardino crocodilo stiyo vio ballerion bio bric bric patapim bric bric assasino bombardino.......
+
+    ttk.Label(ctrl, text="OUTPUT NEURONS", foreground='#ff6b6b').grid(row=3, column=0, sticky='w', pady=4)
+    out_var = tk.IntVar(value=2)
+    ttk.Spinbox(ctrl, from_=1, to=20, textvariable=out_var, width=6).grid(row=3, column=1, pady=4)
+
+    ttk.Label(ctrl, text="SPEED (ms/frame)", foreground='#888888').grid(row=4, column=0, sticky='w', pady=4)
+    speed_var = tk.IntVar(value=40)
+    ttk.Spinbox(ctrl, from_=10, to=200, textvariable=speed_var, width=6).grid(row=4, column=1, pady=4)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    fig_ref[0] = fig
+    ax_ref[0] = ax
+
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas_ref[0] = canvas
+    canvas.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+    def update(*args):
+        if anim[0]:
+            anim[0].event_source.stop()
+        sizes = [inp_var.get()] + [v.get() for v in hidden_vars] + [out_var.get()]
+        draw_network_static(sizes, ax, fig)
+        canvas.draw()
+        total_frames = len(sizes) * STEPS
+        anim[0] = FuncAnimation(fig, animate, frames=total_frames,
+                                interval=speed_var.get(), repeat=True, cache_frame_data=False)
+        canvas.draw()
+#LOOK MAAA ITS THE MOST PURRFECT CODE EVEN CLAUDE CANT CREATE THIS LEVEL OF PERFECTIONISM LIKEITS SOOOO SHINY AND READABLE
+    ttk.Button(ctrl, text="⟳  Draw Network", command=update).grid(
+        row=5, column=0, columnspan=2, pady=16)
+
+    update()
+    root.mainloop()
+
+build_gui()#EEYA EEYA MANGO MUSTARD 6666677777 HEYYYYYY 6777-----
+#signed ez domer nugget kid aka kds1123001
