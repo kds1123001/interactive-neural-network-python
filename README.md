@@ -11,3 +11,4 @@ Clean Dark Aesthetic: I hand-picked a cyber-punkish color palette (#00c8ff, #a85
 Live Calculations & Pulse Animations: Uses FuncAnimation and some basic trigonometry (np.sin) to create a smooth pulsing effect on active nodes and lighting up connection pathways.
 
 Smart Scaling: If you throw 30 neurons into a single layer, the script automatically truncates the middle ones with a dot-dot-dot (...) graphic so your screen doesn’t turn into a giant blob of ink. also don't use LLM(s) for everything.
+      +NO PART OF THIS CODE WAS MADE USING A LLM NOR IMPROVED VIA IT+
