@@ -1,0 +1,4 @@
+How to run it:
+Grab the dependencies: pip install matplotlib numpy
+
+Run the script: python visualizer.py
